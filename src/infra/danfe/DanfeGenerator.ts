@@ -11,6 +11,8 @@ interface PdfDoc {
   fillColor(color: string): PdfDoc;
   lineWidth(width: number): PdfDoc;
   text(text: string, x: number, y: number, options?: Record<string, unknown>): PdfDoc;
+  heightOfString(text: string, options?: Record<string, unknown>): number;
+  image(src: Buffer | string, x: number, y: number, options?: Record<string, unknown>): PdfDoc;
   rect(x: number, y: number, w: number, h: number): PdfDoc;
   stroke(color: string): PdfDoc;
   fill(color: string): PdfDoc;
@@ -66,12 +68,14 @@ export class DanfeGenerator {
     y = this.naturezaProtocolo(doc, d, y);
     y = this.ieRow(doc, d, y);
     y = this.destinatario(doc, d, y);
+    y += 2; y = this.faturas(doc, d, y);
     if (d.fatura) { y += 2; y = this.fatura(doc, d, y); }
     if (d.duplicatas && d.duplicatas.length > 0) { y += 2; y = this.duplicatas(doc, d, y); }
     if (d.pagamentos.length > 0) { y += 2; y = this.pagamento(doc, d, y); }
     y += 2; y = this.impostos(doc, d, y);
     y += 2; y = this.transportador(doc, d, y);
     y += 2; y = this.produtos(doc, d, y);
+    y += 2; y = this.calculoISSQN(doc, d, y);
     y += 2; this.dadosAdicionais(doc, d, y);
   }
 
@@ -122,17 +126,36 @@ export class DanfeGenerator {
     doc.fontSize(FS).font('Helvetica').fillColor(LC);
     doc.text('IDENTIFICACAO DO EMITENTE', M + P, y + P, { width: c1 - P * 2 });
     doc.fillColor('#000000');
+    const logoW = 48, logoH = 48;
+    let textX = M + P;
+    let textW = c1 - P * 2;
+    if (d.logo) {
+      try {
+        doc.image(d.logo, M + P, y + 14, { fit: [logoW, logoH] });
+        textX = M + P + logoW + P;
+        textW = c1 - P * 3 - logoW;
+      } catch {
+        // logo invalida/corrompida: segue sem ela, sem quebrar a geracao do PDF
+      }
+    }
     doc.fontSize(9).font('Helvetica-Bold');
-    doc.text(d.emitente.nome, M + P, y + 14, { width: c1 - P * 2 });
+    doc.text(d.emitente.nome, textX, y + 14, { width: textW });
+    const nomeH = doc.heightOfString(d.emitente.nome, { width: textW });
     doc.fontSize(F).font('Helvetica');
+    const foneEmail = [
+      d.emitente.fone ? `Fone ${this.fmtFone(d.emitente.fone)}` : '',
+      d.emitente.email ?? ''
+    ].filter(Boolean).join(' - ');
     const emitEnder = [
-      d.emitente.fantasia ?? d.emitente.nome,
+      d.emitente.fantasia,
       d.emitente.endereco,
       d.emitente.bairro,
-      `${d.emitente.cidade} - ${d.emitente.uf} - ${this.fmtCep(d.emitente.cep)}`,
-      d.emitente.fone ? `Fone/Fax: ${d.emitente.fone}` : ''
+      `${this.fmtCep(d.emitente.cep)} - ${d.emitente.cidade} - ${d.emitente.uf}`,
+      foneEmail
     ].filter(Boolean).join('\n');
-    doc.text(emitEnder, M + P, y + 28, { width: c1 - P * 2 });
+    // offset dinamico: nome longo pode quebrar em 2+ linhas e sobrepor o endereco
+    // se usarmos um offset fixo que presume 1 linha so.
+    doc.text(emitEnder, textX, y + 14 + nomeH + 2, { width: textW });
 
     // Col 2: DANFE
     const x2 = M + c1;
@@ -293,6 +316,31 @@ export class DanfeGenerator {
     return y + RH;
   }
 
+  // === FATURAS (cabecalho sempre visivel, com ou sem duplicatas) ===
+  private faturas(doc: PdfDoc, d: DanfeData, y: number): number {
+    this.sectionTitle(doc, 'FATURAS', y);
+    y += 10;
+
+    const h = 24;
+    this.box(doc, M, y, W, h);
+    const dups = d.duplicatas ?? [];
+    const groupW = W / 3;
+    for (let i = 0; i < 3; i++) {
+      const x = M + groupW * i;
+      const dup = dups[i];
+      this.label(doc, 'NUMERO', x + P, y + P);
+      this.label(doc, 'VENCIMENTO', x + P + groupW * 0.33, y + P);
+      this.label(doc, 'VALOR', x + P + groupW * 0.66, y + P);
+      if (dup) {
+        this.val(doc, dup.numero, x + P, y + 12, groupW * 0.33 - P * 2);
+        this.val(doc, dup.vencimento, x + P + groupW * 0.33, y + 12, groupW * 0.33 - P * 2);
+        this.val(doc, this.fmtNum(dup.valor, 2), x + P + groupW * 0.66, y + 12, groupW * 0.33 - P * 2);
+      }
+    }
+
+    return y + h;
+  }
+
   // === FATURA ===
   private fatura(doc: PdfDoc, d: DanfeData, y: number): number {
     if (!d.fatura) return y;
@@ -394,6 +442,28 @@ export class DanfeGenerator {
       ['V. TOTAL DA NOTA', t.valorNfe]
     ];
     this.fieldRow(doc, row2, y, c6, RH);
+
+    return y + RH;
+  }
+
+  // === CALCULO DO ISSQN ===
+  private calculoISSQN(doc: PdfDoc, d: DanfeData, y: number): number {
+    this.sectionTitle(doc, 'CALCULO DO ISSQN', y);
+    y += 10;
+
+    const c4 = W / 4;
+    const row: [string, string][] = [
+      ['INSCRICAO MUNICIPAL', d.emitente.im ?? ''],
+      ['VALOR TOTAL DOS SERVICOS', this.fmtNum(d.issqn.valorServicos, 2)],
+      ['BASE DE CALCULO DO ISSQN', this.fmtNum(d.issqn.bcIssqn, 2)],
+      ['VALOR DO ISSQN', this.fmtNum(d.issqn.valorIssqn, 2)]
+    ];
+    for (let i = 0; i < row.length; i++) {
+      const x = M + c4 * i;
+      this.box(doc, x, y, c4, RH);
+      this.label(doc, row[i][0], x + P, y + P);
+      this.val(doc, row[i][1], x + P, y + 12, c4 - P * 2);
+    }
 
     return y + RH;
   }
@@ -650,6 +720,13 @@ export class DanfeGenerator {
     if (doc.length === 14) return doc.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
     if (doc.length === 11) return doc.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
     return doc;
+  }
+
+  private fmtFone(fone: string): string {
+    const digits = fone.replace(/\D/g, '');
+    if (digits.length === 11) return digits.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+    if (digits.length === 10) return digits.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+    return fone;
   }
 
   private fmtCep(cep: string): string {

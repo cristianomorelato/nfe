@@ -159,6 +159,24 @@ function monofasia(ibs: IBSCBSProps): string {
 }
 
 /**
+ * Indica se o item tem alguma informacao de tributacao (base, aliquotas ou
+ * entes tributantes) a declarar. Quando o CST e de isencao/imunidade/nao
+ * incidencia (ex: 400, 410, 500, 510) e o item nao traz nenhum desses dados,
+ * o grupo `gIBSCBS` deve ser omitido por completo — so `CST`+`cClassTrib`.
+ */
+function temInfoTributacao(ibs: IBSCBSProps): boolean {
+  return (
+    ibs.baseCalculo !== undefined ||
+    ibs.pIBSUF !== undefined ||
+    ibs.pIBSMun !== undefined ||
+    ibs.pCBS !== undefined ||
+    ibs.ibsUf !== undefined ||
+    ibs.ibsMun !== undefined ||
+    ibs.cbs !== undefined
+  );
+}
+
+/**
  * Grupo `IBSCBS` do item.
  */
 export function buildIBSCBS(prod: ProdutoProps): string {
@@ -186,6 +204,9 @@ export function buildIBSCBS(prod: ProdutoProps): string {
         tag('vIBS', formatNumber(ibs.ajusteCompetencia.valorIbs, 2)) +
         tag('vCBS', formatNumber(ibs.ajusteCompetencia.valorCbs, 2))
     );
+  } else if (!temInfoTributacao(ibs)) {
+    // Isencao/imunidade/nao incidencia sem nenhum dado de tributacao: so CST+cClassTrib.
+    principal = '';
   } else {
     const vIbsUf = valorDoEnte(ibsUf, base);
     const vIbsMun = valorDoEnte(ibsMun, base);
@@ -308,8 +329,10 @@ export function totaisIbsCbsDoItem(prod: ProdutoProps): TotaisIbsCbsItem | null 
   const mono = ibs.monofasia;
   const cred = ibs.creditoPresumido;
 
-  // gTransfCred e gAjusteCompet nao entram nos totais de tributacao.
-  const temTributacao = !mono && !ibs.transferenciaCredito && !ibs.ajusteCompetencia;
+  // gTransfCred, gAjusteCompet e itens sem nenhum dado de tributacao
+  // (isencao/imunidade/nao incidencia) nao entram nos totais de tributacao.
+  const temTributacao =
+    !mono && !ibs.transferenciaCredito && !ibs.ajusteCompetencia && temInfoTributacao(ibs);
 
   return {
     base: temTributacao ? base : 0,

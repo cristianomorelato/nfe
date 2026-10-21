@@ -19,6 +19,7 @@ declare module 'pdfkit' {
     dash(length: number, options?: Record<string, unknown>): this;
     undash(): this;
     image(src: string | Buffer, x: number, y: number, options?: Record<string, unknown>): this;
+    heightOfString(text: string, options?: Record<string, unknown>): number;
   }
   export default PDFDocument;
 }

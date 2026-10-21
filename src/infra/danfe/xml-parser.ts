@@ -13,6 +13,7 @@ export type DanfeEmitente = {
   readonly uf: string;
   readonly cep: string;
   readonly fone?: string;
+  readonly email?: string;
 };
 
 export type DanfeDestinatario = {
@@ -80,6 +81,12 @@ export type DanfeTransporte = {
   readonly pesoBruto?: string;
 };
 
+export type DanfeISSQN = {
+  readonly valorServicos: string;
+  readonly bcIssqn: string;
+  readonly valorIssqn: string;
+};
+
 export type DanfeFatura = {
   readonly numero: string;
   readonly valorOriginal: string;
@@ -110,7 +117,9 @@ export type DanfeData = {
   readonly destinatario: DanfeDestinatario;
   readonly produtos: readonly DanfeProduto[];
   readonly totais: DanfeTotais;
+  readonly issqn: DanfeISSQN;
   readonly transporte: DanfeTransporte;
+  readonly logo?: Buffer;
   readonly fatura?: DanfeFatura;
   readonly duplicatas?: readonly DanfeDuplicata[];
   readonly pagamentos: readonly DanfePagamento[];
@@ -188,7 +197,10 @@ export function parseNFeXml(xml: string): DanfeData {
       ie: xmlTag(emit, 'IE') ?? '',
       im: xmlTag(emit, 'IM') ?? undefined,
       ieSt: undefined,
-      endereco: `${xmlTag(emitEnder, 'xLgr') ?? ''}, ${xmlTag(emitEnder, 'nro') ?? ''}`,
+      endereco: [
+        `${xmlTag(emitEnder, 'xLgr') ?? ''}, ${xmlTag(emitEnder, 'nro') ?? ''}`,
+        xmlTag(emitEnder, 'xCpl')
+      ].filter(Boolean).join(', '),
       bairro: xmlTag(emitEnder, 'xBairro') ?? '',
       cidade: xmlTag(emitEnder, 'xMun') ?? '',
       uf: xmlTag(emitEnder, 'UF') ?? '',
@@ -220,6 +232,11 @@ export function parseNFeXml(xml: string): DanfeData {
       outrasDespesas: xmlTag(total, 'vOutro') ?? '0.00',
       valorIpi: xmlTag(total, 'vIPI') ?? '0.00',
       valorNfe: xmlTag(total, 'vNF') ?? '0.00'
+    },
+    issqn: {
+      valorServicos: xmlTag(extractBlock(total, 'ISSQNtot'), 'vServ') ?? '0.00',
+      bcIssqn: xmlTag(extractBlock(total, 'ISSQNtot'), 'vBC') ?? '0.00',
+      valorIssqn: xmlTag(extractBlock(total, 'ISSQNtot'), 'vISS') ?? '0.00'
     },
     transporte: {
       modalidade: modalidadeFrete,

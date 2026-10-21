@@ -14,7 +14,7 @@ import { CartaCorrecaoUseCase } from '@nfe/application/use-cases/CartaCorrecaoUs
 import { InutilizaNFeUseCase } from '@nfe/application/use-cases/InutilizaNFeUseCase';
 import { DistribuicaoDFeUseCase } from '@nfe/application/use-cases/DistribuicaoDFeUseCase';
 import { ManifestacaoUseCase } from '@nfe/application/use-cases/ManifestacaoUseCase';
-import { GerarDanfeUseCase } from '@nfe/application/use-cases/GerarDanfeUseCase';
+import { GerarDanfeUseCase, GerarDanfeOptions } from '@nfe/application/use-cases/GerarDanfeUseCase';
 import { NFeEnvironment, TransmitResult, ConsultResult } from '@nfe/core/types';
 import { NFeError } from '@nfe/shared/errors/NFeError';
 import { NFeProps } from '@nfe/domain/entities/NFe';
@@ -225,8 +225,8 @@ export class NFeCore {
     return useCase.consultarPorChave(cnpj, this.uf, chaveAcesso);
   }
 
-  async danfe(xmlAutorizado: string): Promise<Buffer> {
+  async danfe(xmlAutorizado: string, options?: GerarDanfeOptions): Promise<Buffer> {
     const useCase = new GerarDanfeUseCase();
-    return useCase.execute(xmlAutorizado);
+    return useCase.execute(xmlAutorizado, options);
   }
 }

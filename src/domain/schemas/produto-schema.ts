@@ -279,6 +279,7 @@ export const produtoSchema = z.object({
   descricao: z.string().min(1).max(120),
   ncm: z.string().length(8),
   cest: z.string().length(7).optional(),
+  codigoBeneficioFiscal: z.string().min(8).max(10).optional(),
   cfop: z.string().length(4),
   unidade: z.string().min(1).max(6),
   quantidade: z.number().positive(),
