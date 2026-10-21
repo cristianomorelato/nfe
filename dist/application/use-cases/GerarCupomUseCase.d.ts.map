@@ -1,0 +1,1 @@
+{"version":3,"file":"GerarCupomUseCase.d.ts","sourceRoot":"","sources":["../../../src/application/use-cases/GerarCupomUseCase.ts"],"names":[],"mappings":"AAGA,OAAO,KAAK,EAAE,SAAS,EAAE,MAAM,qCAAqC,CAAC;AAErE,YAAY,EAAE,SAAS,EAAE,CAAC;AAE1B,qBAAa,iBAAiB;IAC5B,OAAO,CAAC,QAAQ,CAAC,SAAS,CAAqB;;IAM/C;;;OAGG;IACG,OAAO,CAAC,GAAG,EAAE,MAAM,GAAG,OAAO,CAAC,MAAM,CAAC;CAgB5C"}

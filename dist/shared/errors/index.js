@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CertificateError = exports.SefazRejectError = exports.SchemaValidationError = exports.NFeError = void 0;
+var NFeError_1 = require("./NFeError");
+Object.defineProperty(exports, "NFeError", { enumerable: true, get: function () { return NFeError_1.NFeError; } });
+var core_1 = require("@brasil-fiscal/core");
+Object.defineProperty(exports, "SchemaValidationError", { enumerable: true, get: function () { return core_1.SchemaValidationError; } });
+var core_2 = require("@brasil-fiscal/core");
+Object.defineProperty(exports, "SefazRejectError", { enumerable: true, get: function () { return core_2.SefazRejectError; } });
+var core_3 = require("@brasil-fiscal/core");
+Object.defineProperty(exports, "CertificateError", { enumerable: true, get: function () { return core_3.CertificateError; } });

@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.padLeft = exports.formatDateOnly = exports.formatDate = exports.formatNumber = exports.tagGroup = exports.tag = exports.stripAccents = exports.escapeXml = void 0;
+var core_1 = require("@brasil-fiscal/core");
+Object.defineProperty(exports, "escapeXml", { enumerable: true, get: function () { return core_1.escapeXml; } });
+Object.defineProperty(exports, "stripAccents", { enumerable: true, get: function () { return core_1.stripAccents; } });
+Object.defineProperty(exports, "tag", { enumerable: true, get: function () { return core_1.tag; } });
+Object.defineProperty(exports, "tagGroup", { enumerable: true, get: function () { return core_1.tagGroup; } });
+Object.defineProperty(exports, "formatNumber", { enumerable: true, get: function () { return core_1.formatNumber; } });
+Object.defineProperty(exports, "formatDate", { enumerable: true, get: function () { return core_1.formatDate; } });
+Object.defineProperty(exports, "formatDateOnly", { enumerable: true, get: function () { return core_1.formatDateOnly; } });
+Object.defineProperty(exports, "padLeft", { enumerable: true, get: function () { return core_1.padLeft; } });

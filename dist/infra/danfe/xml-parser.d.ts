@@ -1,0 +1,121 @@
+export type DanfeEmitente = {
+    readonly nome: string;
+    readonly fantasia?: string;
+    readonly cnpj: string;
+    readonly ie: string;
+    readonly im?: string;
+    readonly ieSt?: string;
+    readonly endereco: string;
+    readonly bairro: string;
+    readonly cidade: string;
+    readonly uf: string;
+    readonly cep: string;
+    readonly fone?: string;
+    readonly email?: string;
+};
+export type DanfeDestinatario = {
+    readonly nome: string;
+    readonly cnpjCpf: string;
+    readonly ie?: string;
+    readonly endereco: string;
+    readonly bairro: string;
+    readonly cidade: string;
+    readonly uf: string;
+    readonly cep: string;
+    readonly fone?: string;
+};
+export type DanfeProduto = {
+    readonly codigo: string;
+    readonly descricao: string;
+    readonly ncm: string;
+    readonly origemCsosn: string;
+    readonly cfop: string;
+    readonly unidade: string;
+    readonly quantidade: string;
+    readonly valorUnitario: string;
+    readonly valorTotal: string;
+    readonly valorDesconto: string;
+    readonly bcIcms: string;
+    readonly valorIcms: string;
+    readonly valorIpi: string;
+    readonly aliqIcms: string;
+    readonly aliqIpi: string;
+};
+export type DanfeTotais = {
+    readonly bcIcms: string;
+    readonly valorIcms: string;
+    readonly bcIcmsSt: string;
+    readonly valorIcmsSt: string;
+    readonly valorImportacao: string;
+    readonly valorProdutos: string;
+    readonly valorFrete: string;
+    readonly valorSeguro: string;
+    readonly desconto: string;
+    readonly outrasDespesas: string;
+    readonly valorIpi: string;
+    readonly valorNfe: string;
+};
+export type DanfeTransporte = {
+    readonly modalidade: string;
+    readonly freteTexto: string;
+    readonly nome?: string;
+    readonly cnpjCpf?: string;
+    readonly ie?: string;
+    readonly endereco?: string;
+    readonly cidade?: string;
+    readonly uf?: string;
+    readonly codigoAntt?: string;
+    readonly placa?: string;
+    readonly ufVeiculo?: string;
+    readonly quantidade?: string;
+    readonly especie?: string;
+    readonly marca?: string;
+    readonly numeracao?: string;
+    readonly pesoLiquido?: string;
+    readonly pesoBruto?: string;
+};
+export type DanfeISSQN = {
+    readonly valorServicos: string;
+    readonly bcIssqn: string;
+    readonly valorIssqn: string;
+};
+export type DanfeFatura = {
+    readonly numero: string;
+    readonly valorOriginal: string;
+    readonly valorDesconto: string;
+    readonly valorLiquido: string;
+};
+export type DanfeDuplicata = {
+    readonly numero: string;
+    readonly vencimento: string;
+    readonly valor: string;
+};
+export type DanfePagamento = {
+    readonly forma: string;
+    readonly valor: string;
+};
+export type DanfeData = {
+    readonly chaveAcesso: string;
+    readonly naturezaOperacao: string;
+    readonly numero: string;
+    readonly serie: string;
+    readonly dataEmissao: string;
+    readonly dataSaida?: string;
+    readonly tipoOperacao: string;
+    readonly emitente: DanfeEmitente;
+    readonly destinatario: DanfeDestinatario;
+    readonly produtos: readonly DanfeProduto[];
+    readonly totais: DanfeTotais;
+    readonly issqn: DanfeISSQN;
+    readonly transporte: DanfeTransporte;
+    readonly logo?: Buffer;
+    readonly fatura?: DanfeFatura;
+    readonly duplicatas?: readonly DanfeDuplicata[];
+    readonly pagamentos: readonly DanfePagamento[];
+    readonly protocolo: string;
+    readonly dataAutorizacao: string;
+    readonly informacoesComplementares?: string;
+    readonly informacoesFisco?: string;
+};
+export declare function parseNFeXml(xml: string): DanfeData;
+//# sourceMappingURL=xml-parser.d.ts.map

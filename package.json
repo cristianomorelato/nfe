@@ -11,6 +11,7 @@
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json && tsc-alias -p tsconfig.build.json",
+    "prepare": "npm run build",
     "lint": "eslint .",
     "format": "prettier --write .",
     "test": "tsx --test tests/**/*.spec.ts",
@@ -77,7 +78,7 @@
     }
   },
   "dependencies": {
-    "@brasil-fiscal/core": "^1.6.0",
+    "@brasil-fiscal/core": "github:cristianomorelato/core#b0d21cf5514602b96c2ef0d8a0c54dcec35b0591",
     "zod": "^4.3.6"
   }
 }

@@ -1,0 +1,1 @@
+{"version":3,"file":"NFeError.d.ts","sourceRoot":"","sources":["../../../src/shared/errors/NFeError.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,qBAAqB,CAAC;AAE/C,qBAAa,QAAS,SAAQ,QAAQ;gBACxB,OAAO,EAAE,MAAM,EAAE,KAAK,CAAC,EAAE,KAAK;CAI3C"}

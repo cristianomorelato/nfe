@@ -1,0 +1,105 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MANIFESTACAO_SOAP_ACTION = void 0;
+exports.buildManifestacaoXml = buildManifestacaoXml;
+exports.wrapManifestacaoSoapEnvelope = wrapManifestacaoSoapEnvelope;
+exports.parseManifestacaoResponse = parseManifestacaoResponse;
+exports.requiresJustificativa = requiresJustificativa;
+const NFeError_1 = require("../../shared/errors/NFeError");
+const NFE_NAMESPACE = 'http://www.portalfiscal.inf.br/nfe';
+exports.MANIFESTACAO_SOAP_ACTION = `${NFE_NAMESPACE}/wsdl/NFeRecepcaoEvento4/nfeRecepcaoEvento`;
+const MANIFESTACAO_CONFIG = {
+    confirmacao: {
+        tpEvento: '210200',
+        descEvento: 'Confirmacao da Operacao',
+        requiresJustificativa: false
+    },
+    ciencia: {
+        tpEvento: '210210',
+        descEvento: 'Ciencia da Operacao',
+        requiresJustificativa: false
+    },
+    desconhecimento: {
+        tpEvento: '210220',
+        descEvento: 'Desconhecimento da Operacao',
+        requiresJustificativa: true
+    },
+    naoRealizada: {
+        tpEvento: '210240',
+        descEvento: 'Operacao nao Realizada',
+        requiresJustificativa: true
+    }
+};
+/**
+ * Monta XML de manifestacao do destinatario — SEM envelope SOAP.
+ * Precisa ser assinado antes de envolver no SOAP.
+ */
+function buildManifestacaoXml(tipo, chNFe, cnpj, cOrgao, tpAmb, dhEvento, xJust) {
+    const config = MANIFESTACAO_CONFIG[tipo];
+    const id = `ID${config.tpEvento}${chNFe}01`;
+    const detEventoContent = xJust
+        ? `<descEvento>${config.descEvento}</descEvento><xJust>${xJust}</xJust>`
+        : `<descEvento>${config.descEvento}</descEvento>`;
+    return [
+        `<evento versao="1.00" xmlns="${NFE_NAMESPACE}">`,
+        `<infEvento Id="${id}">`,
+        `<cOrgao>${cOrgao}</cOrgao>`,
+        `<tpAmb>${tpAmb}</tpAmb>`,
+        `<CNPJ>${cnpj}</CNPJ>`,
+        `<chNFe>${chNFe}</chNFe>`,
+        `<dhEvento>${dhEvento}</dhEvento>`,
+        `<tpEvento>${config.tpEvento}</tpEvento>`,
+        '<nSeqEvento>1</nSeqEvento>',
+        '<verEvento>1.00</verEvento>',
+        `<detEvento versao="1.00">${detEventoContent}</detEvento>`,
+        '</infEvento>',
+        '</evento>'
+    ].join('');
+}
+/**
+ * Envolve XML de manifestacao assinado em envelope SOAP.
+ * Usa o RecepcaoEvento4 do Ambiente Nacional.
+ */
+function wrapManifestacaoSoapEnvelope(signedEventoXml) {
+    const inner = signedEventoXml.replace(/<\?xml[^?]*\?>\s*/g, '');
+    return [
+        '<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">',
+        '<soap:Body>',
+        `<nfeDadosMsg xmlns="${NFE_NAMESPACE}/wsdl/NFeRecepcaoEvento4">`,
+        `<envEvento versao="1.00" xmlns="${NFE_NAMESPACE}">`,
+        '<idLote>1</idLote>',
+        inner,
+        '</envEvento>',
+        '</nfeDadosMsg>',
+        '</soap:Body>',
+        '</soap:Envelope>'
+    ].join('');
+}
+/**
+ * Parseia resposta de manifestacao do destinatario.
+ */
+function parseManifestacaoResponse(body) {
+    const retEvento = body.match(/<retEvento[^>]*>([\s\S]*?)<\/retEvento>/);
+    const source = retEvento ? retEvento[1] : body;
+    const cStat = extractTag(source, 'cStat');
+    if (!cStat) {
+        throw new NFeError_1.NFeError('Resposta de manifestacao sem cStat');
+    }
+    return {
+        cStat,
+        xMotivo: extractTag(source, 'xMotivo') ?? 'Motivo desconhecido',
+        chNFe: extractTag(source, 'chNFe') ?? undefined,
+        tpEvento: extractTag(source, 'tpEvento') ?? undefined,
+        dhRegEvento: extractTag(source, 'dhRegEvento') ?? undefined
+    };
+}
+/**
+ * Retorna true se o tipo de manifestacao requer justificativa.
+ */
+function requiresJustificativa(tipo) {
+    return MANIFESTACAO_CONFIG[tipo].requiresJustificativa;
+}
+function extractTag(xml, tag) {
+    const match = xml.match(new RegExp(`<${tag}>([^<]*)</${tag}>`));
+    return match ? match[1] : null;
+}
